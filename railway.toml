@@ -1,0 +1,12 @@
+# Titan Journal API — deploy this repo as a Railway service (not the Redis/Postgres templates alone).
+# https://docs.railway.com/guides/monorepo
+
+[build]
+builder = "NIXPACKS"
+buildCommand = "corepack enable && pnpm install && pnpm --filter @workspace/api-server run build"
+
+[deploy]
+startCommand = "node artifacts/api-server/dist/index.mjs"
+healthcheckPath = "/api/healthz"
+healthcheckTimeout = 120
+restartPolicyType = "ON_FAILURE"
