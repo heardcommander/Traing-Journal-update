@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useLocation } from "wouter";
 import { Activity } from "lucide-react";
 import { useAuth } from "@/contexts/auth-context";
@@ -7,15 +7,33 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
+function useLoginRedirectTarget() {
+  return useMemo(() => {
+    const params = new URLSearchParams(window.location.search);
+    const next = params.get("next");
+    if (next && next.startsWith("/") && !next.startsWith("//")) {
+      return next;
+    }
+    return "/";
+  }, []);
+}
+
 export default function Login() {
-  const { signIn, signUp } = useAuth();
+  const { signIn, signUp, session } = useAuth();
   const [, setLocation] = useLocation();
+  const redirectTo = useLoginRedirectTarget();
   const [mode, setMode] = useState<"signin" | "signup">("signin");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+
+  useEffect(() => {
+    if (session) {
+      setLocation(redirectTo);
+    }
+  }, [session, redirectTo, setLocation]);
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -31,13 +49,13 @@ export default function Login() {
       return;
     }
 
-    if (mode === "signup") {
-      setMessage("Check your email to confirm your account, then sign in.");
+    if (result.needsEmailConfirmation) {
+      setMessage("Account created. Check your email to confirm, then sign in.");
       setMode("signin");
       return;
     }
 
-    setLocation("/");
+    setLocation(redirectTo);
   }
 
   return (
@@ -87,14 +105,30 @@ export default function Login() {
             {mode === "signin" ? (
               <>
                 No account?{" "}
-                <button type="button" className="text-primary hover:underline" onClick={() => setMode("signup")}>
+                <button
+                  type="button"
+                  className="text-primary hover:underline"
+                  onClick={() => {
+                    setMode("signup");
+                    setError(null);
+                    setMessage(null);
+                  }}
+                >
                   Sign up
                 </button>
               </>
             ) : (
               <>
                 Already have an account?{" "}
-                <button type="button" className="text-primary hover:underline" onClick={() => setMode("signin")}>
+                <button
+                  type="button"
+                  className="text-primary hover:underline"
+                  onClick={() => {
+                    setMode("signin");
+                    setError(null);
+                    setMessage(null);
+                  }}
+                >
                   Sign in
                 </button>
               </>

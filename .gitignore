@@ -52,6 +52,7 @@ Thumbs.db
 .tools/
 .env
 
-# Large attachment zips (not needed for deploy)
+# Large assets / agent tooling (not needed on GitHub)
 attached_assets/
 .agents/
+skills-lock.json

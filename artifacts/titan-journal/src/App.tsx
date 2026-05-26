@@ -79,7 +79,7 @@ function AppInner() {
 
   useEffect(() => {
     document.documentElement.classList.add("dark");
-    const timer = setTimeout(() => setReady(true), loading ? 400 : 1200);
+    const timer = setTimeout(() => setReady(true), loading ? 150 : 500);
     return () => clearTimeout(timer);
   }, [loading]);
 

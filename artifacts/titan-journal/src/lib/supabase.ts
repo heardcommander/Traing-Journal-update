@@ -4,7 +4,15 @@ const url = import.meta.env.VITE_SUPABASE_URL;
 const key = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
 if (!url || !key) {
-  console.warn("VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY are required for sign-in.");
+  throw new Error(
+    "Missing VITE_SUPABASE_URL or VITE_SUPABASE_ANON_KEY. Add them to the repo root .env and restart dev:web.",
+  );
 }
 
-export const supabase = createClient(url ?? "", key ?? "");
+export const supabase = createClient(url, key, {
+  auth: {
+    persistSession: true,
+    autoRefreshToken: true,
+    detectSessionInUrl: true,
+  },
+});

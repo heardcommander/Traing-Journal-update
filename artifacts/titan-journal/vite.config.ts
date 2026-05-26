@@ -6,8 +6,10 @@ import runtimeErrorOverlay from "@replit/vite-plugin-runtime-error-modal";
 
 const port = Number(process.env.PORT ?? "18405");
 const basePath = process.env.BASE_PATH ?? "/";
+const repoRoot = path.resolve(import.meta.dirname, "../..");
 
 export default defineConfig({
+  envDir: repoRoot,
   base: basePath,
   plugins: [
     react(),

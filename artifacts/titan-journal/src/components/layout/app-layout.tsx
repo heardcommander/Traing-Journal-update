@@ -22,7 +22,7 @@ interface AppLayoutProps {
 }
 
 export function AppLayout({ children }: AppLayoutProps) {
-  const [location] = useLocation();
+  const [location, setLocation] = useLocation();
   const { user, signOut } = useAuth();
   const [plan, setPlan] = useState<"free" | "pro">("free");
 
@@ -104,7 +104,15 @@ export function AppLayout({ children }: AppLayoutProps) {
           <p className="text-xs text-muted-foreground">
             {new Date().toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric" })}
           </p>
-          <Button variant="ghost" size="sm" className="w-full justify-start text-muted-foreground" onClick={() => signOut()}>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="w-full justify-start text-muted-foreground"
+            onClick={async () => {
+              await signOut();
+              setLocation("/login");
+            }}
+          >
             <LogOut className="h-4 w-4 mr-2" />
             Sign out
           </Button>
