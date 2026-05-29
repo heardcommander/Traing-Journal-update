@@ -2,8 +2,8 @@
 # https://docs.railway.com/guides/monorepo
 
 [build]
-builder = "NIXPACKS"
-buildCommand = "pnpm --filter @workspace/api-server run build"
+builder = "DOCKERFILE"
+dockerfilePath = "Dockerfile"
 
 [deploy]
 startCommand = "node artifacts/api-server/dist/index.mjs"

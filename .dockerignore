@@ -1,0 +1,14 @@
+node_modules
+**/node_modules
+.git
+.local
+**/.env
+**/.env.*
+!/.env.example
+**/dist
+**/.vite
+artifacts/titan-journal/dist
+artifacts/mockup-sandbox/dist
+*.md
+.cursor
+terminals
