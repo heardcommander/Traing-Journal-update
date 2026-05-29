@@ -2,14 +2,16 @@ import { useState } from "react";
 import { useListRituals, getListRitualsQueryKey, useCreateRitual, useDeleteRitual, useUpdateRitual, useListRitualCompletions, getListRitualCompletionsQueryKey, useCreateRitualCompletion, useDeleteRitualCompletion } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Plus, Trash2, Edit2, Check, X } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { asArray, cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 
 const TODAY = new Date().toISOString().slice(0, 10);
 
 export default function Rituals() {
-  const { data: rituals, isLoading } = useListRituals();
-  const { data: completions } = useListRitualCompletions({ date: TODAY }, { query: { queryKey: getListRitualCompletionsQueryKey({ date: TODAY }) } });
+  const { data: ritualsData, isLoading } = useListRituals();
+  const { data: completionsData } = useListRitualCompletions({ date: TODAY }, { query: { queryKey: getListRitualCompletionsQueryKey({ date: TODAY }) } });
+  const rituals = asArray(ritualsData);
+  const completions = asArray(completionsData);
   const createRitual = useCreateRitual();
   const deleteRitual = useDeleteRitual();
   const updateRitual = useUpdateRitual();
@@ -60,15 +62,15 @@ export default function Rituals() {
   const totalRituals = rituals?.length ?? 0;
 
   return (
-    <div className="p-6 space-y-5 max-w-xl">
+    <div className="page-main max-w-xl space-y-6">
       <div>
-        <h1 className="text-xl font-semibold">Daily Rituals</h1>
-        <p className="text-sm text-muted-foreground mt-0.5">Pre and post-market habits that build discipline over time</p>
+        <h1 className="page-title">Daily Rituals</h1>
+        <p className="page-subtitle">Pre and post-market habits that build discipline over time</p>
       </div>
 
       {/* Today's progress */}
       {totalRituals > 0 && (
-        <div className="bg-card border border-card-border rounded-lg p-4">
+        <div className="panel-padded">
           <div className="flex items-center justify-between mb-2">
             <p className="text-sm font-medium">Today's Progress</p>
             <span className="text-xs font-mono text-muted-foreground">{completedCount}/{totalRituals} complete</span>
@@ -86,7 +88,7 @@ export default function Rituals() {
       )}
 
       {/* Ritual checklist */}
-      <div className="bg-card border border-card-border rounded-lg overflow-hidden">
+      <div className="panel overflow-hidden">
         <div className="px-4 py-3 border-b border-border">
           <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Today — {new Date().toLocaleDateString("en-US", { month: "long", day: "numeric" })}</p>
         </div>

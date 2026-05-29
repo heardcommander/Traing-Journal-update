@@ -28,8 +28,8 @@ export default function TradeDetail({ params }: { params: { id: string } }) {
   const [editData, setEditData] = useState<Record<string, string | number>>({});
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
-  if (isLoading) return <div className="p-6 text-sm text-muted-foreground">Loading...</div>;
-  if (!trade) return <div className="p-6 text-sm text-muted-foreground">Trade not found. <Link href="/trades" className="text-primary">Back to trades</Link></div>;
+  if (isLoading) return <div className="page-main text-sm text-muted-foreground">Loading...</div>;
+  if (!trade) return <div className="page-main text-sm text-muted-foreground">Trade not found. <Link href="/trades" className="text-primary">Back to trades</Link></div>;
 
   function pnlClass(v: number) { return v > 0 ? "profit" : v < 0 ? "loss" : "text-muted-foreground"; }
   function pnlDisplay(v: number) { return v > 0 ? `+$${v.toFixed(2)}` : v < 0 ? `-$${Math.abs(v).toFixed(2)}` : `$${v.toFixed(2)}`; }
@@ -103,14 +103,14 @@ export default function TradeDetail({ params }: { params: { id: string } }) {
         </AlertDialogContent>
       </AlertDialog>
 
-      <div className="p-6 max-w-2xl space-y-5">
+      <div className="page-main max-w-2xl space-y-6">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <Link href="/trades" className="text-muted-foreground hover:text-foreground transition-colors" data-testid="link-back">
               <ArrowLeft className="h-4 w-4" />
             </Link>
             <div>
-              <h1 className="text-xl font-semibold">{trade.pair}</h1>
+              <h1 className="page-title">{trade.pair}</h1>
               <p className="text-sm text-muted-foreground">{new Date(trade.tradedAt).toLocaleDateString("en-US", { weekday: "long", year: "numeric", month: "long", day: "numeric" })}</p>
             </div>
           </div>
@@ -138,7 +138,7 @@ export default function TradeDetail({ params }: { params: { id: string } }) {
         </div>
 
         {/* P&L hero */}
-        <div className="bg-card border border-card-border rounded-lg p-5 flex items-center justify-between">
+        <div className="panel p-5 flex items-center justify-between">
           <div>
             <p className="text-xs text-muted-foreground mb-1">Profit / Loss</p>
             <p className={cn("text-3xl font-mono font-bold tracking-tight", pnlClass(trade.pnl))} data-testid="text-pnl">
@@ -171,12 +171,12 @@ export default function TradeDetail({ params }: { params: { id: string } }) {
 
         {/* Risk & Assessment */}
         <div className="grid grid-cols-2 gap-4">
-          <div className="bg-card border border-card-border rounded-lg p-4 space-y-3">
+          <div className="panel p-4 space-y-3">
             <h2 className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Risk Management</h2>
             <DetailRow label="Stop Loss" value={trade.stopLoss != null ? `$${Number(trade.stopLoss).toFixed(5)}` : "—"} />
             <DetailRow label="Take Profit" value={trade.takeProfit != null ? `$${Number(trade.takeProfit).toFixed(5)}` : "—"} />
           </div>
-          <div className="bg-card border border-card-border rounded-lg p-4 space-y-3">
+          <div className="panel p-4 space-y-3">
             <h2 className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Self Assessment</h2>
             <div>
               <p className="text-xs text-muted-foreground mb-1">Confidence</p>
@@ -216,7 +216,7 @@ export default function TradeDetail({ params }: { params: { id: string } }) {
 
         {/* Tags */}
         {(trade.tags || editing) && (
-          <div className="bg-card border border-card-border rounded-lg p-4">
+          <div className="panel p-4">
             <h2 className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-2">Tags</h2>
             {editing ? (
               <input
@@ -237,7 +237,7 @@ export default function TradeDetail({ params }: { params: { id: string } }) {
         )}
 
         {/* Notes */}
-        <div className="bg-card border border-card-border rounded-lg p-4 space-y-2">
+        <div className="panel p-4 space-y-2">
           <h2 className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Trade Notes</h2>
           {editing ? (
             <textarea
@@ -254,7 +254,7 @@ export default function TradeDetail({ params }: { params: { id: string } }) {
         </div>
 
         {/* Lessons */}
-        <div className="bg-card border border-card-border rounded-lg p-4 space-y-2">
+        <div className="panel p-4 space-y-2">
           <h2 className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Lessons Learned</h2>
           {editing ? (
             <textarea

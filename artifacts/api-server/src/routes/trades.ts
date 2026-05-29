@@ -1,7 +1,7 @@
-import { Router, type Request } from "express";
+import { Router } from "express";
 import { db } from "@workspace/db";
 import { tradesTable } from "@workspace/db/schema";
-import { and, desc, eq } from "drizzle-orm";
+import { eq, desc, like, sql } from "drizzle-orm";
 import {
   CreateTradeBody,
   UpdateTradeBody,
@@ -10,17 +10,8 @@ import {
   DeleteTradeParams,
   ListTradesQueryParams,
 } from "@workspace/api-zod";
-import { z } from "zod";
-import { parseTradesCsv } from "../lib/csv-trades";
-import type { AuthedRequest } from "../middleware/auth";
-
-const ImportTradesBody = z.object({ csv: z.string().min(1) });
 
 const router = Router();
-
-function userId(req: Request) {
-  return (req as AuthedRequest).userId;
-}
 
 function toTradeResponse(t: typeof tradesTable.$inferSelect) {
   return {
@@ -33,12 +24,14 @@ function toTradeResponse(t: typeof tradesTable.$inferSelect) {
   };
 }
 
+// GET /api/trades/pnl-history — MUST be before /:id
 router.get("/trades/pnl-history", async (req, res) => {
-  const uid = userId(req);
   const trades = await db
-    .select({ tradedAt: tradesTable.tradedAt, pnl: tradesTable.pnl })
+    .select({
+      tradedAt: tradesTable.tradedAt,
+      pnl: tradesTable.pnl,
+    })
     .from(tradesTable)
-    .where(eq(tradesTable.userId, uid))
     .orderBy(tradesTable.tradedAt);
 
   const byDate: Record<string, { dailyPnl: number; tradeCount: number }> = {};
@@ -54,24 +47,15 @@ router.get("/trades/pnl-history", async (req, res) => {
     .sort(([a], [b]) => a.localeCompare(b))
     .map(([date, { dailyPnl, tradeCount }]) => {
       cumulative += dailyPnl;
-      return {
-        date,
-        dailyPnl: parseFloat(dailyPnl.toFixed(2)),
-        cumulativePnl: parseFloat(cumulative.toFixed(2)),
-        tradeCount,
-      };
+      return { date, dailyPnl: parseFloat(dailyPnl.toFixed(2)), cumulativePnl: parseFloat(cumulative.toFixed(2)), tradeCount };
     });
 
   res.json(history);
 });
 
+// GET /api/trades/stats — MUST be before /:id
 router.get("/trades/stats", async (req, res) => {
-  const uid = userId(req);
-  const trades = await db
-    .select()
-    .from(tradesTable)
-    .where(eq(tradesTable.userId, uid))
-    .orderBy(desc(tradesTable.tradedAt));
+  const trades = await db.select().from(tradesTable).orderBy(desc(tradesTable.tradedAt));
 
   const totalTrades = trades.length;
   if (totalTrades === 0) {
@@ -91,7 +75,7 @@ router.get("/trades/stats", async (req, res) => {
   const wins = trades.filter((t) => parseFloat(String(t.pnl)) > 0).length;
   const losses = trades.filter((t) => parseFloat(String(t.pnl)) < 0).length;
   const totalPnl = trades.reduce((s, t) => s + parseFloat(String(t.pnl)), 0);
-  const winRate = (wins / totalTrades) * 100;
+  const winRate = totalTrades > 0 ? (wins / totalTrades) * 100 : 0;
 
   const setupMap: Record<string, { count: number; totalPnl: number; wins: number }> = {};
   for (const t of trades) {
@@ -124,6 +108,7 @@ router.get("/trades/stats", async (req, res) => {
   }));
 
   const withSL = trades.filter((t) => t.stopLoss != null).length;
+  const riskDisciplineScore = parseFloat(((withSL / totalTrades) * 100).toFixed(1));
 
   return res.json({
     totalPnl: parseFloat(totalPnl.toFixed(2)),
@@ -132,60 +117,18 @@ router.get("/trades/stats", async (req, res) => {
     totalTrades,
     wins,
     losses,
-    riskDisciplineScore: parseFloat(((withSL / totalTrades) * 100).toFixed(1)),
+    riskDisciplineScore,
     setupBreakdown,
     emotionBreakdown,
   });
 });
 
-router.post("/trades/import", async (req, res) => {
-  const uid = userId(req);
-  const body = ImportTradesBody.parse(req.body);
-  const { rows, errors } = parseTradesCsv(body.csv);
-
-  if (rows.length === 0) {
-    return res.status(400).json({
-      imported: 0,
-      skipped: 0,
-      errors: errors.length ? errors : ["No valid rows found"],
-    });
-  }
-
-  let imported = 0;
-  for (const row of rows) {
-    await db.insert(tradesTable).values({
-      userId: uid,
-      pair: row.pair,
-      type: row.type,
-      pnl: String(row.pnl),
-      emotion: row.emotion,
-      setup: row.setup,
-      notes: row.notes,
-      lessonsLearned: row.lessonsLearned,
-      marketSession: row.marketSession,
-      stopLoss: row.stopLoss != null ? String(row.stopLoss) : null,
-      takeProfit: row.takeProfit != null ? String(row.takeProfit) : null,
-      confidence: row.confidence,
-      rating: row.rating,
-      tags: row.tags,
-      tradedAt: row.tradedAt ?? new Date(),
-    });
-    imported++;
-  }
-
-  res.json({ imported, skipped: errors.length, errors });
-});
-
+// GET /api/trades
 router.get("/trades", async (req, res) => {
-  const uid = userId(req);
   const query = ListTradesQueryParams.safeParse(req.query);
   const { search, setup, emotion } = query.success ? query.data : {};
 
-  let rows = await db
-    .select()
-    .from(tradesTable)
-    .where(eq(tradesTable.userId, uid))
-    .orderBy(desc(tradesTable.tradedAt));
+  let rows = await db.select().from(tradesTable).orderBy(desc(tradesTable.tradedAt));
 
   if (search) {
     const s = search.toLowerCase();
@@ -193,7 +136,7 @@ router.get("/trades", async (req, res) => {
       (t) =>
         t.pair.toLowerCase().includes(s) ||
         t.setup.toLowerCase().includes(s) ||
-        (t.notes ?? "").toLowerCase().includes(s),
+        (t.notes ?? "").toLowerCase().includes(s)
     );
   }
   if (setup) rows = rows.filter((t) => t.setup === setup);
@@ -202,13 +145,12 @@ router.get("/trades", async (req, res) => {
   res.json(rows.map(toTradeResponse));
 });
 
+// POST /api/trades
 router.post("/trades", async (req, res) => {
-  const uid = userId(req);
   const body = CreateTradeBody.parse(req.body);
   const [created] = await db
     .insert(tradesTable)
     .values({
-      userId: uid,
       pair: body.pair,
       type: body.type as "Buy" | "Sell",
       pnl: String(body.pnl),
@@ -228,19 +170,16 @@ router.post("/trades", async (req, res) => {
   res.status(201).json(toTradeResponse(created));
 });
 
+// GET /api/trades/:id
 router.get("/trades/:id", async (req, res) => {
-  const uid = userId(req);
   const { id } = GetTradeParams.parse({ id: parseInt(req.params.id, 10) });
-  const [trade] = await db
-    .select()
-    .from(tradesTable)
-    .where(and(eq(tradesTable.id, id), eq(tradesTable.userId, uid)));
+  const [trade] = await db.select().from(tradesTable).where(eq(tradesTable.id, id));
   if (!trade) return res.status(404).json({ error: "Trade not found" });
   res.json(toTradeResponse(trade));
 });
 
+// PATCH /api/trades/:id
 router.patch("/trades/:id", async (req, res) => {
-  const uid = userId(req);
   const { id } = UpdateTradeParams.parse({ id: parseInt(req.params.id, 10) });
   const body = UpdateTradeBody.parse(req.body);
 
@@ -263,20 +202,17 @@ router.patch("/trades/:id", async (req, res) => {
   const [updated] = await db
     .update(tradesTable)
     .set(updateData)
-    .where(and(eq(tradesTable.id, id), eq(tradesTable.userId, uid)))
+    .where(eq(tradesTable.id, id))
     .returning();
 
   if (!updated) return res.status(404).json({ error: "Trade not found" });
   res.json(toTradeResponse(updated));
 });
 
+// DELETE /api/trades/:id
 router.delete("/trades/:id", async (req, res) => {
-  const uid = userId(req);
   const { id } = DeleteTradeParams.parse({ id: parseInt(req.params.id, 10) });
-  const [deleted] = await db
-    .delete(tradesTable)
-    .where(and(eq(tradesTable.id, id), eq(tradesTable.userId, uid)))
-    .returning();
+  const [deleted] = await db.delete(tradesTable).where(eq(tradesTable.id, id)).returning();
   if (!deleted) return res.status(404).json({ error: "Trade not found" });
   res.status(204).end();
 });

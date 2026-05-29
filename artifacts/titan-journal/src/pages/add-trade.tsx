@@ -79,21 +79,21 @@ export default function AddTrade() {
   }
 
   return (
-    <div className="p-6 max-w-2xl">
-      <div className="flex items-center gap-3 mb-6">
+    <div className="page-main max-w-2xl">
+      <div className="flex items-center gap-3">
         <Link href="/trades" className="text-muted-foreground hover:text-foreground transition-colors" data-testid="link-back-trades">
           <ArrowLeft className="h-4 w-4" />
         </Link>
         <div>
-          <h1 className="text-xl font-semibold">Log Trade</h1>
-          <p className="text-sm text-muted-foreground mt-0.5">Record a new trade in your journal</p>
+          <h1 className="page-title">Log Trade</h1>
+          <p className="page-subtitle">Record a new trade in your journal</p>
         </div>
       </div>
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
         {/* Core fields */}
-        <div className="bg-card border border-card-border rounded-lg p-5 space-y-4">
-          <h2 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">Core Details</h2>
+        <div className="panel-padded space-y-4">
+          <h2 className="stat-label">Core Details</h2>
 
           <div className="grid grid-cols-2 gap-4">
             <Field label="Currency Pair *" error={errors.pair?.message}>
@@ -133,7 +133,7 @@ export default function AddTrade() {
         </div>
 
         {/* Risk management */}
-        <div className="bg-card border border-card-border rounded-lg p-5 space-y-4">
+        <div className="panel-padded space-y-4">
           <h2 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">Risk Management</h2>
           <div className="grid grid-cols-3 gap-4">
             <Field label="Stop Loss" error={errors.stopLoss?.message}>
@@ -152,7 +152,7 @@ export default function AddTrade() {
         </div>
 
         {/* Self assessment */}
-        <div className="bg-card border border-card-border rounded-lg p-5 space-y-4">
+        <div className="panel-padded space-y-4">
           <h2 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">Self Assessment</h2>
           <div className="grid grid-cols-2 gap-4">
             <Field label="Confidence (0–100)" error={errors.confidence?.message}>
@@ -168,7 +168,7 @@ export default function AddTrade() {
         </div>
 
         {/* Journal */}
-        <div className="bg-card border border-card-border rounded-lg p-5 space-y-4">
+        <div className="panel-padded space-y-4">
           <h2 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">Journal</h2>
           <Field label="Trade Notes">
             <textarea {...register("notes")} rows={3} placeholder="What happened? Why did you enter? What was your reasoning?" data-testid="textarea-notes" className={`${inputCls} resize-none`} />
@@ -183,12 +183,12 @@ export default function AddTrade() {
             type="submit"
             disabled={isSubmitting || createTrade.isPending}
             data-testid="button-submit-trade"
-            className="bg-primary text-primary-foreground px-6 py-2 rounded-md text-sm font-medium hover:opacity-90 transition-opacity disabled:opacity-50"
+            className="btn-primary px-6 disabled:opacity-50"
           >
             {createTrade.isPending ? "Saving..." : "Log Trade"}
           </button>
           <Link href="/trades">
-            <button type="button" data-testid="button-cancel" className="px-6 py-2 rounded-md text-sm font-medium border border-border hover:bg-accent/50 transition-colors text-foreground">
+            <button type="button" data-testid="button-cancel" className="px-6 py-2.5 rounded-lg text-sm font-medium border border-border hover:bg-accent/50 transition-colors text-foreground">
               Cancel
             </button>
           </Link>
@@ -198,7 +198,7 @@ export default function AddTrade() {
   );
 }
 
-const inputCls = "w-full px-3 py-2 text-sm bg-input border border-border rounded-md focus:outline-none focus:ring-1 focus:ring-ring text-foreground placeholder:text-muted-foreground";
+const inputCls = "input-field";
 
 function Field({ label, error, children }: { label: string; error?: string; children: React.ReactNode }) {
   return (

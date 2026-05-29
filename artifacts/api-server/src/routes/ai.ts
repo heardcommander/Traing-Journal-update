@@ -1,21 +1,13 @@
-import { Router, type Request } from "express";
+import { Router } from "express";
 import { db } from "@workspace/db";
 import { tradesTable } from "@workspace/db/schema";
-import { desc, eq } from "drizzle-orm";
-import { isOpenAiConfigured, openai } from "@workspace/integrations-openai-ai-server";
-import { getAccount } from "../lib/account";
-import type { AuthedRequest } from "../middleware/auth";
+import { desc } from "drizzle-orm";
+import { openai } from "@workspace/integrations-openai-ai-server";
 
 const router = Router();
 
 router.post("/ai/analyze", async (req, res) => {
-  const userId = (req as AuthedRequest).userId;
-  const trades = await db
-    .select()
-    .from(tradesTable)
-    .where(eq(tradesTable.userId, userId))
-    .orderBy(desc(tradesTable.tradedAt))
-    .limit(50);
+  const trades = await db.select().from(tradesTable).orderBy(desc(tradesTable.tradedAt)).limit(50);
 
   if (trades.length === 0) {
     return res.json({
@@ -77,34 +69,6 @@ router.post("/ai/analyze", async (req, res) => {
       totalPnl: d.pnl.toFixed(2),
     })),
   };
-
-  const account = await getAccount(userId, (req as AuthedRequest).userEmail);
-  const useGpt = isOpenAiConfigured() && openai && account.plan === "pro";
-
-  if (!useGpt) {
-    const topSetup = Object.entries(setupMap).sort((a, b) => b[1].pnl - a[1].pnl)[0];
-    const worstEmotion = Object.entries(emotionMap).sort((a, b) => a[1].pnl - b[1].pnl)[0];
-    return res.json({
-      patterns: [
-        `Win rate is ${winRate}% across ${totalTrades} logged trades.`,
-        topSetup ? `Best setup by P&L: ${topSetup[0]} ($${topSetup[1].pnl.toFixed(2)}).` : "Log setups consistently to spot patterns.",
-        worstEmotion ? `${worstEmotion[0]} sessions average $${(worstEmotion[1].pnl / worstEmotion[1].count).toFixed(2)} per trade.` : "Track emotions on every trade.",
-      ],
-      strengths: [
-        wins > 0 ? `${wins} winning trades logged with discipline.` : "You are building a consistent journaling habit.",
-        "Structured trade data ready for deeper AI analysis when configured.",
-      ],
-      improvements: [
-        losses > wins ? "Review losing trades for repeated rule breaks." : "Protect gains by sizing down after win streaks.",
-        "Add stop-loss and take-profit on every trade to improve risk discipline scoring.",
-      ],
-      psychologyInsight: worstEmotion
-        ? `Trades tagged "${worstEmotion[0]}" are dragging performance — consider a pre-trade checklist when you feel that way.`
-        : "Emotion tagging will reveal which mental states correlate with your best and worst outcomes.",
-      tipOfTheDay: "Journal one lesson per trade today — specificity beats generic review.",
-      generatedAt: new Date().toISOString(),
-    });
-  }
 
   const completion = await openai.chat.completions.create({
     model: "gpt-4o-mini",

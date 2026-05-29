@@ -23,14 +23,14 @@ export default function AiCoach() {
   }
 
   return (
-    <div className="p-6 space-y-5 max-w-2xl">
+    <div className="page-main max-w-2xl space-y-6">
       <div>
-        <h1 className="text-xl font-semibold">AI Coach</h1>
-        <p className="text-sm text-muted-foreground mt-0.5">Pattern analysis and performance insights powered by AI</p>
+        <h1 className="page-title">AI Coach</h1>
+        <p className="page-subtitle">Pattern analysis and performance insights powered by AI</p>
       </div>
 
       {!analysis && !analyzeTrading.isPending && (
-        <div className="bg-card border border-card-border rounded-lg p-8 text-center space-y-4">
+        <div className="panel p-8 text-center space-y-4">
           <div className="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center mx-auto">
             <Brain className="h-7 w-7 text-primary" />
           </div>
@@ -43,7 +43,7 @@ export default function AiCoach() {
           <button
             onClick={runAnalysis}
             data-testid="button-analyze"
-            className="inline-flex items-center gap-2 bg-primary text-primary-foreground px-5 py-2.5 rounded-md text-sm font-medium hover:opacity-90 transition-opacity"
+            className="btn-primary px-5"
           >
             <Sparkles className="h-4 w-4" />
             Analyze My Trades
@@ -52,7 +52,7 @@ export default function AiCoach() {
       )}
 
       {analyzeTrading.isPending && (
-        <div className="bg-card border border-card-border rounded-lg p-10 text-center space-y-3">
+        <div className="panel p-10 text-center space-y-3">
           <RefreshCw className="h-8 w-8 text-primary mx-auto animate-spin" />
           <p className="text-sm text-muted-foreground">Analyzing your trading patterns...</p>
         </div>
@@ -76,7 +76,7 @@ export default function AiCoach() {
           </div>
 
           {/* Psychology insight */}
-          <div className="bg-card border border-card-border rounded-lg p-4 space-y-2">
+          <div className="panel p-4 space-y-2">
             <div className="flex items-center gap-2">
               <Brain className="h-4 w-4 text-chart-4 flex-shrink-0" />
               <h2 className="text-sm font-medium">Psychology Profile</h2>
@@ -86,7 +86,7 @@ export default function AiCoach() {
 
           <div className="grid grid-cols-2 gap-4">
             {/* Strengths */}
-            <div className="bg-card border border-card-border rounded-lg p-4 space-y-3">
+            <div className="panel p-4 space-y-3">
               <div className="flex items-center gap-2">
                 <TrendingUp className="h-4 w-4 text-chart-2 flex-shrink-0" />
                 <h2 className="text-sm font-medium">Strengths</h2>
@@ -102,7 +102,7 @@ export default function AiCoach() {
             </div>
 
             {/* Improvements */}
-            <div className="bg-card border border-card-border rounded-lg p-4 space-y-3">
+            <div className="panel p-4 space-y-3">
               <div className="flex items-center gap-2">
                 <AlertTriangle className="h-4 w-4 text-chart-3 flex-shrink-0" />
                 <h2 className="text-sm font-medium">Areas to Improve</h2>
@@ -119,7 +119,7 @@ export default function AiCoach() {
           </div>
 
           {/* Patterns */}
-          <div className="bg-card border border-card-border rounded-lg p-4 space-y-3">
+          <div className="panel p-4 space-y-3">
             <h2 className="text-sm font-medium">Behavioral Patterns</h2>
             <div className="space-y-2">
               {analysis.patterns.map((p, i) => (

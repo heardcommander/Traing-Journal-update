@@ -67,14 +67,14 @@ export default function Trades() {
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>
-    <div className="p-6 space-y-5">
+    <div className="page-main space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-semibold">Trade Log</h1>
-          <p className="text-sm text-muted-foreground mt-0.5">{trades?.length ?? 0} trades recorded</p>
+          <h1 className="page-title">Trade Log</h1>
+          <p className="page-subtitle">{trades?.length ?? 0} trades recorded</p>
         </div>
         <Link href="/trades/new" data-testid="button-add-trade">
-          <button className="flex items-center gap-2 bg-primary text-primary-foreground px-4 py-2 rounded-md text-sm font-medium hover:opacity-90 transition-opacity">
+          <button className="btn-primary">
             <Plus className="h-4 w-4" /> Add Trade
           </button>
         </Link>
@@ -90,14 +90,14 @@ export default function Trades() {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             data-testid="input-search"
-            className="w-full pl-8 pr-3 py-1.5 text-sm bg-input border border-border rounded-md focus:outline-none focus:ring-1 focus:ring-ring text-foreground placeholder:text-muted-foreground"
+            className="input-field pl-8 py-2"
           />
         </div>
         <select
           value={setupFilter}
           onChange={(e) => setSetupFilter(e.target.value)}
           data-testid="select-setup-filter"
-          className="text-sm bg-input border border-border rounded-md px-3 py-1.5 text-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+          className="input-field w-auto py-2"
         >
           <option value="">All setups</option>
           {setupOptions.map((s) => <option key={s} value={s}>{s}</option>)}
@@ -106,7 +106,7 @@ export default function Trades() {
           value={emotionFilter}
           onChange={(e) => setEmotionFilter(e.target.value)}
           data-testid="select-emotion-filter"
-          className="text-sm bg-input border border-border rounded-md px-3 py-1.5 text-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+          className="input-field w-auto py-2"
         >
           <option value="">All emotions</option>
           {emotionOptions.map((e) => <option key={e} value={e}>{e}</option>)}
@@ -114,7 +114,7 @@ export default function Trades() {
       </div>
 
       {/* Table */}
-      <div className="bg-card border border-card-border rounded-lg overflow-hidden">
+      <div className="panel overflow-hidden">
         {isLoading ? (
           <div className="py-16 text-center text-sm text-muted-foreground">Loading trades...</div>
         ) : !trades || trades.length === 0 ? (
@@ -125,7 +125,7 @@ export default function Trades() {
         ) : (
           <table className="w-full text-sm">
             <thead>
-              <tr className="text-muted-foreground text-xs border-b border-border bg-muted/30">
+              <tr className="table-header border-b border-border bg-muted/20">
                 <th className="px-4 py-2.5 text-left font-medium">Pair</th>
                 <th className="px-4 py-2.5 text-left font-medium">Type</th>
                 <th className="px-4 py-2.5 text-left font-medium">Setup</th>
@@ -146,7 +146,7 @@ export default function Trades() {
                     </Link>
                   </td>
                   <td className="px-4 py-2.5">
-                    <span className={cn("text-xs px-1.5 py-0.5 rounded font-medium", t.type === "Buy" ? "bg-chart-2/15 text-chart-2" : "bg-destructive/15 text-destructive")}>
+                    <span className={t.type === "Buy" ? "badge-buy" : "badge-sell"}>
                       {t.type}
                     </span>
                   </td>

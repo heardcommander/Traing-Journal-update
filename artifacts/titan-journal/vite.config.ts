@@ -4,23 +4,32 @@ import tailwindcss from "@tailwindcss/vite";
 import path from "path";
 import runtimeErrorOverlay from "@replit/vite-plugin-runtime-error-modal";
 
-const port = Number(process.env.PORT ?? "18405");
+const rawPort = process.env.PORT ?? "18405";
+const port = Number(rawPort);
+
+if (Number.isNaN(port) || port <= 0) {
+  throw new Error(`Invalid PORT value: "${rawPort}"`);
+}
+
 const basePath = process.env.BASE_PATH ?? "/";
-const repoRoot = path.resolve(import.meta.dirname, "../..");
 
 export default defineConfig({
-  envDir: repoRoot,
   base: basePath,
   plugins: [
     react(),
     tailwindcss(),
     runtimeErrorOverlay(),
-    ...(process.env.NODE_ENV !== "production" && process.env.REPL_ID !== undefined
+    ...(process.env.NODE_ENV !== "production" &&
+    process.env.REPL_ID !== undefined
       ? [
           await import("@replit/vite-plugin-cartographer").then((m) =>
-            m.cartographer({ root: path.resolve(import.meta.dirname, "..") }),
+            m.cartographer({
+              root: path.resolve(import.meta.dirname, ".."),
+            }),
           ),
-          await import("@replit/vite-plugin-dev-banner").then((m) => m.devBanner()),
+          await import("@replit/vite-plugin-dev-banner").then((m) =>
+            m.devBanner(),
+          ),
         ]
       : []),
   ],
@@ -41,23 +50,19 @@ export default defineConfig({
     strictPort: true,
     host: "0.0.0.0",
     allowedHosts: true,
+    fs: {
+      strict: true,
+    },
     proxy: {
       "/api": {
-        target: process.env.API_PROXY_TARGET ?? "http://127.0.0.1:8080",
+        target: process.env.VITE_API_PROXY_TARGET ?? "http://127.0.0.1:8080",
         changeOrigin: true,
       },
     },
-    fs: { strict: true },
   },
   preview: {
     port,
     host: "0.0.0.0",
     allowedHosts: true,
-    proxy: {
-      "/api": {
-        target: process.env.API_PROXY_TARGET ?? "http://127.0.0.1:8080",
-        changeOrigin: true,
-      },
-    },
   },
 });

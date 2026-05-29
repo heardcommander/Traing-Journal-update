@@ -19,7 +19,7 @@ if (!process.env.DATABASE_URL) {
 const isPglite = process.env.DATABASE_URL.startsWith("pglite:");
 
 export default defineConfig({
-  schema: path.join(__dirname, "./src/schema/index.ts"),
+  schema: "./src/schema/*.ts",
   dialect: "postgresql",
   ...(isPglite
     ? {

@@ -3,7 +3,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { Link } from "wouter";
 import { TrendingUp, TrendingDown, Target, Activity, ArrowRight } from "lucide-react";
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
-import { cn } from "@/lib/utils";
+import { asArray, cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 
 const TODAY = new Date().toISOString().slice(0, 10);
@@ -12,8 +12,10 @@ export default function Dashboard() {
   const { data: stats, isLoading: statsLoading } = useGetTradeStats();
   const { data: pnlHistory, isLoading: histLoading } = useGetPnlHistory();
   const { data: trades } = useListTrades();
-  const { data: rituals } = useListRituals();
-  const { data: completions } = useListRitualCompletions({ date: TODAY }, { query: { queryKey: getListRitualCompletionsQueryKey({ date: TODAY }) } });
+  const { data: ritualsData } = useListRituals();
+  const { data: completionsData } = useListRitualCompletions({ date: TODAY }, { query: { queryKey: getListRitualCompletionsQueryKey({ date: TODAY }) } });
+  const rituals = asArray(ritualsData);
+  const completions = asArray(completionsData);
   const createCompletion = useCreateRitualCompletion();
   const deleteCompletion = useDeleteRitualCompletion();
   const queryClient = useQueryClient();
@@ -33,7 +35,7 @@ export default function Dashboard() {
   const completedCount = completions?.length ?? 0;
   const totalRituals = rituals?.length ?? 0;
 
-  const recentTrades = trades?.slice(0, 5) ?? [];
+  const recentTrades = asArray(trades).slice(0, 5);
 
   const pnlChartData = pnlHistory?.slice(-30) ?? [];
 
@@ -45,10 +47,10 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="page-main">
       <div>
-        <h1 className="text-xl font-semibold text-foreground">Dashboard</h1>
-        <p className="text-sm text-muted-foreground mt-0.5">
+        <h1 className="page-title">Dashboard</h1>
+        <p className="page-subtitle">
           {new Date().toLocaleDateString("en-US", { weekday: "long", year: "numeric", month: "long", day: "numeric" })}
         </p>
       </div>
@@ -91,8 +93,8 @@ export default function Dashboard() {
 
       <div className="grid grid-cols-3 gap-4">
         {/* Equity curve */}
-        <div className="col-span-2 bg-card border border-card-border rounded-lg p-4">
-          <h2 className="text-sm font-medium text-foreground mb-3">Equity Curve (Last 30 Days)</h2>
+        <div className="col-span-2 panel-padded">
+          <h2 className="panel-title mb-4">Equity Curve (Last 30 Days)</h2>
           {histLoading ? (
             <div className="h-40 flex items-center justify-center text-muted-foreground text-sm">Loading...</div>
           ) : pnlChartData.length === 0 ? (
@@ -102,8 +104,8 @@ export default function Dashboard() {
               <AreaChart data={pnlChartData} margin={{ top: 4, right: 4, bottom: 0, left: 0 }}>
                 <defs>
                   <linearGradient id="pnlGrad" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="hsl(217,91%,60%)" stopOpacity={0.25} />
-                    <stop offset="95%" stopColor="hsl(217,91%,60%)" stopOpacity={0} />
+                    <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.25} />
+                    <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0} />
                   </linearGradient>
                 </defs>
                 <XAxis dataKey="date" tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} tickLine={false} axisLine={false} />
@@ -112,16 +114,16 @@ export default function Dashboard() {
                   contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: "6px", fontSize: "12px" }}
                   formatter={(v: number) => [`$${v.toFixed(2)}`, "Cumulative P&L"]}
                 />
-                <Area type="monotone" dataKey="cumulativePnl" stroke="hsl(217,91%,60%)" strokeWidth={2} fill="url(#pnlGrad)" />
+                <Area type="monotone" dataKey="cumulativePnl" stroke="hsl(var(--primary))" strokeWidth={2} fill="url(#pnlGrad)" />
               </AreaChart>
             </ResponsiveContainer>
           )}
         </div>
 
         {/* Today's rituals */}
-        <div className="bg-card border border-card-border rounded-lg p-4">
-          <div className="flex items-center justify-between mb-3">
-            <h2 className="text-sm font-medium text-foreground">Today's Rituals</h2>
+        <div className="panel-padded">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="panel-title">Today's Rituals</h2>
             <span className="text-xs text-muted-foreground font-mono">{completedCount}/{totalRituals}</span>
           </div>
           {!rituals || rituals.length === 0 ? (
@@ -168,9 +170,9 @@ export default function Dashboard() {
       </div>
 
       {/* Recent trades */}
-      <div className="bg-card border border-card-border rounded-lg">
-        <div className="flex items-center justify-between px-4 py-3 border-b border-border">
-          <h2 className="text-sm font-medium text-foreground">Recent Trades</h2>
+      <div className="panel overflow-hidden">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-border">
+          <h2 className="panel-title">Recent Trades</h2>
           <Link href="/trades" className="flex items-center gap-1 text-xs text-primary hover:underline" data-testid="link-all-trades">
             View all <ArrowRight className="h-3 w-3" />
           </Link>
@@ -182,7 +184,7 @@ export default function Dashboard() {
         ) : (
           <table className="w-full text-sm">
             <thead>
-              <tr className="text-muted-foreground text-xs border-b border-border">
+              <tr className="table-header border-b border-border bg-muted/20">
                 <th className="px-4 py-2 text-left font-medium">Pair</th>
                 <th className="px-4 py-2 text-left font-medium">Type</th>
                 <th className="px-4 py-2 text-left font-medium">Setup</th>
@@ -200,7 +202,7 @@ export default function Dashboard() {
                     </Link>
                   </td>
                   <td className="px-4 py-2.5">
-                    <span className={cn("text-xs px-1.5 py-0.5 rounded font-medium", t.type === "Buy" ? "bg-chart-2/15 text-chart-2" : "bg-destructive/15 text-destructive")}>
+                    <span className={t.type === "Buy" ? "badge-buy" : "badge-sell"}>
                       {t.type}
                     </span>
                   </td>
@@ -224,12 +226,12 @@ export default function Dashboard() {
 
 function StatCard({ label, value, valueClass, icon, sub, "data-testid": testId }: { label: string; value: string; valueClass?: string; icon: React.ReactNode; sub?: string; "data-testid"?: string }) {
   return (
-    <div className="bg-card border border-card-border rounded-lg p-4" data-testid={testId}>
-      <div className="flex items-center justify-between mb-2">
-        <p className="text-xs text-muted-foreground font-medium">{label}</p>
+    <div className="stat-card" data-testid={testId}>
+      <div className="flex items-center justify-between mb-3">
+        <p className="stat-label">{label}</p>
         {icon}
       </div>
-      <p className={cn("text-xl font-semibold font-mono tracking-tight", valueClass)}>{value}</p>
+      <p className={cn("stat-value", valueClass)}>{value}</p>
       {sub && <p className="text-xs text-muted-foreground mt-1">{sub}</p>}
     </div>
   );
