@@ -1,11 +1,3 @@
-# Static Titan Journal frontend (Vite build output).
-# Works with Cloudflare Workers "wrangler deploy" or Pages Git builds.
-
 name = "traing-journal-update"
 compatibility_date = "2026-05-29"
-
 pages_build_output_dir = "artifacts/titan-journal/dist/public"
-
-[assets]
-directory = "./artifacts/titan-journal/dist/public"
-not_found_handling = "single-page-application"
