@@ -37,7 +37,7 @@ export default function Dashboard() {
 
   const recentTrades = asArray(trades).slice(0, 5);
 
-  const pnlChartData = pnlHistory?.slice(-30) ?? [];
+  const pnlChartData = asArray(pnlHistory).slice(-30);
 
   function pnlClass(v: number) {
     return v > 0 ? "profit" : v < 0 ? "loss" : "text-muted-foreground";

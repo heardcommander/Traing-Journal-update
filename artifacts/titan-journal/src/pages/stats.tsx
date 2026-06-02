@@ -2,11 +2,12 @@ import { useGetTradeStats, useGetPnlHistory } from "@workspace/api-client-react"
 import {
   AreaChart, Area, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Cell
 } from "recharts";
-import { cn } from "@/lib/utils";
+import { asArray, cn } from "@/lib/utils";
 
 export default function Stats() {
   const { data: stats, isLoading: statsLoading } = useGetTradeStats();
   const { data: pnlHistory, isLoading: histLoading } = useGetPnlHistory();
+  const pnlHistoryData = asArray(pnlHistory);
 
   function pnlClass(v: number) { return v > 0 ? "profit" : v < 0 ? "loss" : "text-muted-foreground"; }
   function pnlSign(v: number) { return v > 0 ? "+" : ""; }
@@ -44,11 +45,11 @@ export default function Stats() {
           {/* Equity curve */}
           <div className="panel-padded">
             <h2 className="panel-title mb-4">Cumulative P&L</h2>
-            {histLoading || !pnlHistory || pnlHistory.length === 0 ? (
+            {histLoading || pnlHistoryData.length === 0 ? (
               <div className="h-48 flex items-center justify-center text-muted-foreground text-sm">No data</div>
             ) : (
               <ResponsiveContainer width="100%" height={200}>
-                <AreaChart data={pnlHistory} margin={{ top: 4, right: 4, bottom: 0, left: 0 }}>
+                <AreaChart data={pnlHistoryData} margin={{ top: 4, right: 4, bottom: 0, left: 0 }}>
                   <defs>
                     <linearGradient id="grad" x1="0" y1="0" x2="0" y2="1">
                       <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.3} />
@@ -69,17 +70,17 @@ export default function Stats() {
             {/* Setup breakdown */}
             <div className="panel-padded">
               <h2 className="panel-title mb-4">P&L by Setup</h2>
-              {stats.setupBreakdown.length === 0 ? (
+              {asArray(stats?.setupBreakdown).length === 0 ? (
                 <div className="h-36 flex items-center justify-center text-muted-foreground text-sm">No data</div>
               ) : (
                 <ResponsiveContainer width="100%" height={160}>
-                  <BarChart data={stats.setupBreakdown} margin={{ top: 4, right: 4, bottom: 0, left: 0 }}>
+                  <BarChart data={asArray(stats?.setupBreakdown)} margin={{ top: 4, right: 4, bottom: 0, left: 0 }}>
                     <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
                     <XAxis dataKey="setup" tick={{ fontSize: 9, fill: "hsl(var(--muted-foreground))" }} tickLine={false} axisLine={false} />
                     <YAxis tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} tickLine={false} axisLine={false} tickFormatter={(v) => `$${v}`} width={55} />
                     <Tooltip contentStyle={chartTooltipStyle} formatter={(v: number) => [`$${v.toFixed(2)}`, "Total P&L"]} />
                     <Bar dataKey="totalPnl" radius={[3, 3, 0, 0]}>
-                      {stats.setupBreakdown.map((entry, i) => (
+                      {asArray(stats?.setupBreakdown).map((entry, i) => (
                         <Cell key={i} fill={entry.totalPnl >= 0 ? "hsl(142,71%,45%)" : "hsl(0,72%,51%)"} />
                       ))}
                     </Bar>
@@ -91,17 +92,17 @@ export default function Stats() {
             {/* Emotion breakdown */}
             <div className="panel-padded">
               <h2 className="panel-title mb-4">P&L by Emotion</h2>
-              {stats.emotionBreakdown.length === 0 ? (
+              {asArray(stats?.emotionBreakdown).length === 0 ? (
                 <div className="h-36 flex items-center justify-center text-muted-foreground text-sm">No data</div>
               ) : (
                 <ResponsiveContainer width="100%" height={160}>
-                  <BarChart data={stats.emotionBreakdown} margin={{ top: 4, right: 4, bottom: 0, left: 0 }}>
+                  <BarChart data={asArray(stats?.emotionBreakdown)} margin={{ top: 4, right: 4, bottom: 0, left: 0 }}>
                     <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
                     <XAxis dataKey="emotion" tick={{ fontSize: 9, fill: "hsl(var(--muted-foreground))" }} tickLine={false} axisLine={false} />
                     <YAxis tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} tickLine={false} axisLine={false} tickFormatter={(v) => `$${v}`} width={55} />
                     <Tooltip contentStyle={chartTooltipStyle} formatter={(v: number) => [`$${v.toFixed(2)}`, "Total P&L"]} />
                     <Bar dataKey="totalPnl" radius={[3, 3, 0, 0]}>
-                      {stats.emotionBreakdown.map((entry, i) => (
+                      {asArray(stats?.emotionBreakdown).map((entry, i) => (
                         <Cell key={i} fill={entry.totalPnl >= 0 ? "hsl(142,71%,45%)" : "hsl(0,72%,51%)"} />
                       ))}
                     </Bar>
@@ -126,7 +127,7 @@ export default function Stats() {
                 </tr>
               </thead>
               <tbody>
-                {[...stats.setupBreakdown].sort((a, b) => b.totalPnl - a.totalPnl).map((s) => (
+                 {asArray(stats?.setupBreakdown).sort((a, b) => b.totalPnl - a.totalPnl).map((s) => (
                   <tr key={s.setup} className="border-b border-border/50 hover:bg-accent/20 transition-colors">
                     <td className="px-4 py-2.5 font-medium">{s.setup}</td>
                     <td className="px-4 py-2.5 text-right text-muted-foreground font-mono text-xs">{s.count}</td>
