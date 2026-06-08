@@ -1,7 +1,8 @@
 import { Router } from "express";
 import { db } from "@workspace/db";
 import { ritualsTable, ritualCompletionsTable } from "@workspace/db/schema";
-import { eq } from "drizzle-orm";
+import { eq, and } from "drizzle-orm";
+import { resolveUserId } from "../lib/user-id";
 import {
   CreateRitualBody,
   UpdateRitualBody,
@@ -30,33 +31,51 @@ function toCompletionResponse(c: typeof ritualCompletionsTable.$inferSelect) {
 
 // GET /api/rituals
 router.get("/rituals", async (req, res) => {
-  const rows = await db.select().from(ritualsTable).orderBy(ritualsTable.createdAt);
+  const userId = resolveUserId(req);
+  const rows = await db
+    .select()
+    .from(ritualsTable)
+    .where(eq(ritualsTable.userId, userId))
+    .orderBy(ritualsTable.createdAt);
   res.json(rows.map(toRitualResponse));
 });
 
 // POST /api/rituals
 router.post("/rituals", async (req, res) => {
+  const userId = resolveUserId(req);
   const body = CreateRitualBody.parse(req.body);
-  const [created] = await db.insert(ritualsTable).values({ label: body.label }).returning();
+  const [created] = await db
+    .insert(ritualsTable)
+    .values({ userId, label: body.label })
+    .returning();
   res.status(201).json(toRitualResponse(created));
 });
 
 // PATCH /api/rituals/:id
 router.patch("/rituals/:id", async (req, res) => {
+  const userId = resolveUserId(req);
   const { id } = UpdateRitualParams.parse({ id: parseInt(req.params.id, 10) });
   const body = UpdateRitualBody.parse(req.body);
   const updateData: Partial<typeof ritualsTable.$inferInsert> = {};
   if (body.label !== undefined) updateData.label = body.label;
 
-  const [updated] = await db.update(ritualsTable).set(updateData).where(eq(ritualsTable.id, id)).returning();
+  const [updated] = await db
+    .update(ritualsTable)
+    .set(updateData)
+    .where(and(eq(ritualsTable.id, id), eq(ritualsTable.userId, userId)))
+    .returning();
   if (!updated) return res.status(404).json({ error: "Ritual not found" });
   res.json(toRitualResponse(updated));
 });
 
 // DELETE /api/rituals/:id
 router.delete("/rituals/:id", async (req, res) => {
+  const userId = resolveUserId(req);
   const { id } = DeleteRitualParams.parse({ id: parseInt(req.params.id, 10) });
-  const [deleted] = await db.delete(ritualsTable).where(eq(ritualsTable.id, id)).returning();
+  const [deleted] = await db
+    .delete(ritualsTable)
+    .where(and(eq(ritualsTable.id, id), eq(ritualsTable.userId, userId)))
+    .returning();
   if (!deleted) return res.status(404).json({ error: "Ritual not found" });
   res.status(204).end();
 });

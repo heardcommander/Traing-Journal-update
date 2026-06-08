@@ -1,7 +1,8 @@
 import { Router } from "express";
 import { db } from "@workspace/db";
 import { tradesTable } from "@workspace/db/schema";
-import { eq, desc, like, sql } from "drizzle-orm";
+import { eq, desc, and } from "drizzle-orm";
+import { resolveUserId } from "../lib/user-id";
 import {
   CreateTradeBody,
   UpdateTradeBody,
@@ -26,12 +27,14 @@ function toTradeResponse(t: typeof tradesTable.$inferSelect) {
 
 // GET /api/trades/pnl-history — MUST be before /:id
 router.get("/trades/pnl-history", async (req, res) => {
+  const userId = resolveUserId(req);
   const trades = await db
     .select({
       tradedAt: tradesTable.tradedAt,
       pnl: tradesTable.pnl,
     })
     .from(tradesTable)
+    .where(eq(tradesTable.userId, userId))
     .orderBy(tradesTable.tradedAt);
 
   const byDate: Record<string, { dailyPnl: number; tradeCount: number }> = {};
@@ -55,7 +58,12 @@ router.get("/trades/pnl-history", async (req, res) => {
 
 // GET /api/trades/stats — MUST be before /:id
 router.get("/trades/stats", async (req, res) => {
-  const trades = await db.select().from(tradesTable).orderBy(desc(tradesTable.tradedAt));
+  const userId = resolveUserId(req);
+  const trades = await db
+    .select()
+    .from(tradesTable)
+    .where(eq(tradesTable.userId, userId))
+    .orderBy(desc(tradesTable.tradedAt));
 
   const totalTrades = trades.length;
   if (totalTrades === 0) {
@@ -125,10 +133,15 @@ router.get("/trades/stats", async (req, res) => {
 
 // GET /api/trades
 router.get("/trades", async (req, res) => {
+  const userId = resolveUserId(req);
   const query = ListTradesQueryParams.safeParse(req.query);
   const { search, setup, emotion } = query.success ? query.data : {};
 
-  let rows = await db.select().from(tradesTable).orderBy(desc(tradesTable.tradedAt));
+  let rows = await db
+    .select()
+    .from(tradesTable)
+    .where(eq(tradesTable.userId, userId))
+    .orderBy(desc(tradesTable.tradedAt));
 
   if (search) {
     const s = search.toLowerCase();
@@ -147,10 +160,12 @@ router.get("/trades", async (req, res) => {
 
 // POST /api/trades
 router.post("/trades", async (req, res) => {
+  const userId = resolveUserId(req);
   const body = CreateTradeBody.parse(req.body);
   const [created] = await db
     .insert(tradesTable)
     .values({
+      userId,
       pair: body.pair,
       type: body.type as "Buy" | "Sell",
       pnl: String(body.pnl),
@@ -172,14 +187,19 @@ router.post("/trades", async (req, res) => {
 
 // GET /api/trades/:id
 router.get("/trades/:id", async (req, res) => {
+  const userId = resolveUserId(req);
   const { id } = GetTradeParams.parse({ id: parseInt(req.params.id, 10) });
-  const [trade] = await db.select().from(tradesTable).where(eq(tradesTable.id, id));
+  const [trade] = await db
+    .select()
+    .from(tradesTable)
+    .where(and(eq(tradesTable.id, id), eq(tradesTable.userId, userId)));
   if (!trade) return res.status(404).json({ error: "Trade not found" });
   res.json(toTradeResponse(trade));
 });
 
 // PATCH /api/trades/:id
 router.patch("/trades/:id", async (req, res) => {
+  const userId = resolveUserId(req);
   const { id } = UpdateTradeParams.parse({ id: parseInt(req.params.id, 10) });
   const body = UpdateTradeBody.parse(req.body);
 
@@ -202,7 +222,7 @@ router.patch("/trades/:id", async (req, res) => {
   const [updated] = await db
     .update(tradesTable)
     .set(updateData)
-    .where(eq(tradesTable.id, id))
+    .where(and(eq(tradesTable.id, id), eq(tradesTable.userId, userId)))
     .returning();
 
   if (!updated) return res.status(404).json({ error: "Trade not found" });
@@ -211,8 +231,12 @@ router.patch("/trades/:id", async (req, res) => {
 
 // DELETE /api/trades/:id
 router.delete("/trades/:id", async (req, res) => {
+  const userId = resolveUserId(req);
   const { id } = DeleteTradeParams.parse({ id: parseInt(req.params.id, 10) });
-  const [deleted] = await db.delete(tradesTable).where(eq(tradesTable.id, id)).returning();
+  const [deleted] = await db
+    .delete(tradesTable)
+    .where(and(eq(tradesTable.id, id), eq(tradesTable.userId, userId)))
+    .returning();
   if (!deleted) return res.status(404).json({ error: "Trade not found" });
   res.status(204).end();
 });

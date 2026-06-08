@@ -310,7 +310,9 @@ function apiPath(url: string): string {
 /**
  * Coerce known list/stats shapes so UI never calls .map on objects (bad proxy, HTML, etc.).
  */
-function normalizeApiResponse(url: string, data: unknown): unknown {
+function normalizeApiResponse(method: string, url: string, data: unknown): unknown {
+  if (method !== "GET") return data;
+
   const path = apiPath(url);
 
   if (
@@ -422,5 +424,5 @@ export async function customFetch<T = unknown>(
   }
 
   const body = await parseSuccessBody(response, responseType, requestInfo);
-  return normalizeApiResponse(requestInfo.url, body) as T;
+  return normalizeApiResponse(requestInfo.method, requestInfo.url, body) as T;
 }

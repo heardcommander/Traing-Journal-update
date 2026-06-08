@@ -73,7 +73,10 @@ export default function AddTrade() {
           toast({ title: "Trade logged", description: `${trade.pair} ${trade.type}` });
           setLocation(`/trades/${trade.id}`);
         },
-        onError: () => toast({ title: "Failed to save trade", variant: "destructive" }),
+        onError: (err) => {
+          const message = err instanceof Error ? err.message : "Failed to save trade";
+          toast({ title: "Failed to save trade", description: message, variant: "destructive" });
+        },
       }
     );
   }
