@@ -3,7 +3,7 @@ import { useGetTrade, getGetTradeQueryKey, useUpdateTrade, useDeleteTrade, getLi
 import { useQueryClient } from "@tanstack/react-query";
 import { useLocation, Link } from "wouter";
 import { ArrowLeft, Edit2, Trash2, Check, X, Star } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { asArray, cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import {
   AlertDialog,
@@ -228,7 +228,7 @@ export default function TradeDetail({ params }: { params: { id: string } }) {
               />
             ) : trade.tags ? (
               <div className="flex flex-wrap gap-1.5">
-                {trade.tags.split(",").map((tag) => (
+                {asArray(trade.tags.split(",")).map((tag) => (
                   <span key={tag} className="px-2 py-0.5 bg-accent text-accent-foreground text-xs rounded-full">{tag.trim()}</span>
                 ))}
               </div>

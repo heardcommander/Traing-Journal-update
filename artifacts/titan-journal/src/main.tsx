@@ -6,6 +6,11 @@ import "./index.css";
 const apiBase = import.meta.env.VITE_API_BASE?.replace(/\/+$/, "");
 if (apiBase) {
   setBaseUrl(apiBase);
+} else if (import.meta.env.PROD) {
+  console.warn(
+    "[Titan Journal] VITE_API_BASE is not set — API calls may hit the Pages host and return non-array JSON. " +
+      "Set VITE_API_BASE to your Railway API URL in Cloudflare Pages environment variables, then redeploy.",
+  );
 }
 
 const root = document.getElementById("root");

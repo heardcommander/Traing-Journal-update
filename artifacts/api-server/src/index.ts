@@ -22,4 +22,16 @@ app.listen(port, (err) => {
   }
 
   logger.info({ port }, "Server listening");
+
+  void import("./routes/index.js")
+    .then(({ default: router }) => {
+      app.use("/api", router);
+      logger.info("API routes mounted");
+    })
+    .catch((mountErr) => {
+      logger.error(
+        { err: mountErr },
+        "Failed to mount API routes — set DATABASE_URL to a Neon postgresql:// URL (not pglite://)",
+      );
+    });
 });

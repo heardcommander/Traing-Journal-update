@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useAnalyzeTrading } from "@workspace/api-client-react";
 import { Brain, Sparkles, TrendingUp, AlertTriangle, Lightbulb, RefreshCw } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { asArray, cn } from "@/lib/utils";
 
 type AiAnalysis = {
   patterns: string[];
@@ -92,7 +92,7 @@ export default function AiCoach() {
                 <h2 className="text-sm font-medium">Strengths</h2>
               </div>
               <ul className="space-y-2 pl-6">
-                {analysis.strengths.map((s, i) => (
+                {asArray(analysis.strengths).map((s, i) => (
                   <li key={i} className="text-sm text-foreground leading-relaxed flex gap-2" data-testid={`text-strength-${i}`}>
                     <span className="w-1.5 h-1.5 rounded-full bg-chart-2 flex-shrink-0 mt-1.5" />
                     {s}
@@ -108,7 +108,7 @@ export default function AiCoach() {
                 <h2 className="text-sm font-medium">Areas to Improve</h2>
               </div>
               <ul className="space-y-2 pl-6">
-                {analysis.improvements.map((imp, i) => (
+                {asArray(analysis.improvements).map((imp, i) => (
                   <li key={i} className="text-sm text-foreground leading-relaxed flex gap-2" data-testid={`text-improvement-${i}`}>
                     <span className="w-1.5 h-1.5 rounded-full bg-chart-3 flex-shrink-0 mt-1.5" />
                     {imp}
@@ -122,7 +122,7 @@ export default function AiCoach() {
           <div className="panel p-4 space-y-3">
             <h2 className="text-sm font-medium">Behavioral Patterns</h2>
             <div className="space-y-2">
-              {analysis.patterns.map((p, i) => (
+              {asArray(analysis.patterns).map((p, i) => (
                 <div key={i} className="flex gap-3 py-2 border-b border-border/50 last:border-0" data-testid={`text-pattern-${i}`}>
                   <span className="text-xs font-mono text-muted-foreground flex-shrink-0 pt-0.5">{String(i + 1).padStart(2, "0")}</span>
                   <p className="text-sm text-foreground leading-relaxed">{p}</p>

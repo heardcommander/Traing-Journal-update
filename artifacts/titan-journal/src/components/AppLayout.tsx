@@ -1,5 +1,6 @@
 import { Link, useLocation } from "wouter";
 import { LayoutDashboard, BookOpen, PlusCircle, BarChart2, CheckSquare, Brain, TrendingUp } from "lucide-react";
+import ErrorBoundary from "@/ErrorBoundary";
 import { cn } from "@/lib/utils";
 
 const navItems = [
@@ -64,7 +65,9 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       </aside>
 
       <main className="flex-1 overflow-y-auto app-glow relative">
-        {children}
+        <ErrorBoundary key={location}>
+          {children}
+        </ErrorBoundary>
       </main>
     </div>
   );

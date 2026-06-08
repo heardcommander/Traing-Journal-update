@@ -3,7 +3,7 @@ import { useListTrades, getListTradesQueryKey, useDeleteTrade } from "@workspace
 import { useQueryClient } from "@tanstack/react-query";
 import { Link } from "wouter";
 import { Plus, Search, Trash2 } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { asArray, cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import {
   AlertDialog,
@@ -46,8 +46,8 @@ export default function Trades() {
   function pnlClass(v: number) { return v > 0 ? "profit" : v < 0 ? "loss" : "text-muted-foreground"; }
   function pnlDisplay(v: number) { return v > 0 ? `+$${v.toFixed(2)}` : v < 0 ? `-$${Math.abs(v).toFixed(2)}` : `$${v.toFixed(2)}`; }
 
-  const setupOptions = [...new Set(trades?.map((t) => t.setup) ?? [])];
-  const emotionOptions = [...new Set(trades?.map((t) => t.emotion) ?? [])];
+  const setupOptions = [...new Set(asArray(trades).map((t) => t.setup))];
+  const emotionOptions = [...new Set(asArray(trades).map((t) => t.emotion))];
 
   return (
     <>
@@ -71,7 +71,7 @@ export default function Trades() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="page-title">Trade Log</h1>
-          <p className="page-subtitle">{trades?.length ?? 0} trades recorded</p>
+          <p className="page-subtitle">{asArray(trades).length} trades recorded</p>
         </div>
         <Link href="/trades/new" data-testid="button-add-trade">
           <button className="btn-primary">
@@ -117,7 +117,7 @@ export default function Trades() {
       <div className="panel overflow-hidden">
         {isLoading ? (
           <div className="py-16 text-center text-sm text-muted-foreground">Loading trades...</div>
-        ) : !trades || trades.length === 0 ? (
+        ) : asArray(trades).length === 0 ? (
           <div className="py-16 text-center">
             <p className="text-sm text-muted-foreground mb-3">No trades found.</p>
             <Link href="/trades/new" className="text-primary text-sm hover:underline" data-testid="link-add-first-trade">Log your first trade</Link>
@@ -138,7 +138,7 @@ export default function Trades() {
               </tr>
             </thead>
             <tbody>
-              {trades.map((t) => (
+              {asArray(trades).map((t) => (
                 <tr key={t.id} className="border-b border-border/50 hover:bg-accent/20 transition-colors" data-testid={`row-trade-${t.id}`}>
                   <td className="px-4 py-2.5">
                     <Link href={`/trades/${t.id}`} className="font-medium hover:text-primary transition-colors" data-testid={`link-trade-${t.id}`}>

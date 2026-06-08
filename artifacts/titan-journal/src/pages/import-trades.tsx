@@ -5,7 +5,7 @@ import { Upload, FileSpreadsheet, Download, ArrowRight, Loader2 } from "lucide-r
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { getListTradesQueryKey } from "@workspace/api-client-react";
+import { asArray } from "@/lib/utils";
 import { authFetch } from "@/lib/auth-fetch";
 
 const base = import.meta.env.BASE_URL.replace(/\/$/, "");
@@ -113,9 +113,9 @@ export default function ImportTrades() {
           <CardContent className="pt-6 space-y-2 text-sm">
             <p><span className="text-profit font-semibold">{result.imported}</span> trades imported</p>
             {result.skipped > 0 && <p className="text-muted-foreground">{result.skipped} rows skipped</p>}
-            {result.errors.length > 0 && (
+            {asArray(result.errors).length > 0 && (
               <ul className="text-destructive text-xs font-mono list-disc pl-4">
-                {result.errors.map((err, i) => <li key={i}>{err}</li>)}
+                {asArray(result.errors).map((err, i) => <li key={i}>{err}</li>)}
               </ul>
             )}
             <Link href="/trades">

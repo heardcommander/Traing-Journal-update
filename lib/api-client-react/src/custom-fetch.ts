@@ -290,6 +290,60 @@ function inferResponseType(response: Response): "json" | "text" | "blob" {
   return "blob";
 }
 
+function toArray<T>(value: unknown): T[] {
+  return Array.isArray(value) ? value : [];
+}
+
+/** Path only (no query), works with absolute Railway URLs and relative /api paths. */
+function apiPath(url: string): string {
+  const withoutQuery = url.split("?")[0] ?? url;
+  try {
+    if (withoutQuery.includes("://")) {
+      return new URL(withoutQuery).pathname;
+    }
+  } catch {
+    // fall through
+  }
+  return withoutQuery;
+}
+
+/**
+ * Coerce known list/stats shapes so UI never calls .map on objects (bad proxy, HTML, etc.).
+ */
+function normalizeApiResponse(url: string, data: unknown): unknown {
+  const path = apiPath(url);
+
+  if (
+    path === "/api/trades" ||
+    path === "/api/rituals" ||
+    path === "/api/ritual-completions" ||
+    path === "/api/trades/pnl-history"
+  ) {
+    return toArray(data);
+  }
+
+  if (path === "/api/trades/stats" && data != null && typeof data === "object" && !Array.isArray(data)) {
+    const stats = data as Record<string, unknown>;
+    return {
+      ...stats,
+      setupBreakdown: toArray(stats.setupBreakdown),
+      emotionBreakdown: toArray(stats.emotionBreakdown),
+    };
+  }
+
+  if (path === "/api/ai/analyze" && data != null && typeof data === "object" && !Array.isArray(data)) {
+    const analysis = data as Record<string, unknown>;
+    return {
+      ...analysis,
+      patterns: toArray(analysis.patterns),
+      strengths: toArray(analysis.strengths),
+      improvements: toArray(analysis.improvements),
+    };
+  }
+
+  return data;
+}
+
 async function parseSuccessBody(
   response: Response,
   responseType: "json" | "text" | "blob" | "auto",
@@ -367,5 +421,6 @@ export async function customFetch<T = unknown>(
     throw new ApiError(response, errorData, requestInfo);
   }
 
-  return (await parseSuccessBody(response, responseType, requestInfo)) as T;
+  const body = await parseSuccessBody(response, responseType, requestInfo);
+  return normalizeApiResponse(requestInfo.url, body) as T;
 }

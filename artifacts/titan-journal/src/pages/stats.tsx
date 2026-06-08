@@ -29,7 +29,7 @@ export default function Stats() {
 
       {statsLoading ? (
         <div className="text-sm text-muted-foreground">Loading stats...</div>
-      ) : !stats || stats.totalTrades === 0 ? (
+      ) : !stats || typeof stats.totalTrades !== "number" || stats.totalTrades === 0 ? (
         <div className="text-sm text-muted-foreground">No trades yet. Start logging to see analytics.</div>
       ) : (
         <>
