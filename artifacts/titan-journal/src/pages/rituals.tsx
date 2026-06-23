@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useListRituals, getListRitualsQueryKey, useCreateRitual, useDeleteRitual, useUpdateRitual, useListRitualCompletions, getListRitualCompletionsQueryKey, useCreateRitualCompletion, useDeleteRitualCompletion } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Plus, Trash2, Edit2, Check, X } from "lucide-react";
-import { asArray, cn } from "@/lib/utils";
+import { asArray, apiErrorMessage, cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 
 const TODAY = new Date().toISOString().slice(0, 10);
@@ -31,7 +31,11 @@ export default function Rituals() {
     if (!newLabel.trim()) return;
     createRitual.mutate({ data: { label: newLabel.trim() } }, {
       onSuccess: () => { invalidateRituals(); setNewLabel(""); toast({ title: "Ritual added" }); },
-      onError: () => toast({ title: "Failed to add ritual", variant: "destructive" }),
+      onError: (err) => toast({
+        title: "Failed to add ritual",
+        description: apiErrorMessage(err, "Sign in and try again."),
+        variant: "destructive",
+      }),
     });
   }
 

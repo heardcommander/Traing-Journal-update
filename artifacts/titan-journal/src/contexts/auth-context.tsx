@@ -8,6 +8,7 @@ import {
   type ReactNode,
 } from "react";
 import type { Session, User } from "@supabase/supabase-js";
+import { setAuthTokenGetter } from "@workspace/api-client-react";
 import { supabase } from "@/lib/supabase";
 
 export type AuthResult = {
@@ -44,17 +45,41 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => {
-      setSession(data.session);
-      setLoading(false);
+    setAuthTokenGetter(async () => {
+      const { data } = await supabase.auth.getSession();
+      return data.session?.access_token ?? null;
     });
+  }, []);
+
+  useEffect(() => {
+    supabase.auth
+      .getSession()
+      .then(({ data }) => {
+        setSession(data.session);
+      })
+      .catch((error) => {
+        console.error("Supabase session fetch failed", error);
+      })
+      .finally(() => {
+        setLoading(false);
+      });
 
     const { data: sub } = supabase.auth.onAuthStateChange((_event, next) => {
       setSession(next);
       setLoading(false);
     });
 
-    return () => sub.subscription.unsubscribe();
+    return () => {
+      try {
+        const subscription = (sub as any)?.subscription ?? (sub as any);
+        const unsubscribeFn = typeof subscription?.unsubscribe === "function" ? subscription.unsubscribe : undefined;
+        if (unsubscribeFn) {
+          unsubscribeFn.call(subscription);
+        }
+      } catch (e) {
+        // swallow; cleanup best-effort only
+      }
+    };
   }, []);
 
   const signIn = useCallback(async (email: string, password: string): Promise<AuthResult> => {

@@ -1,13 +1,20 @@
 import { Router } from "express";
 import { db } from "@workspace/db";
 import { tradesTable } from "@workspace/db/schema";
-import { desc } from "drizzle-orm";
+import { desc, eq } from "drizzle-orm";
+import { resolveUserId } from "../lib/user-id";
 import { openai } from "@workspace/integrations-openai-ai-server";
 
 const router = Router();
 
 router.post("/ai/analyze", async (req, res) => {
-  const trades = await db.select().from(tradesTable).orderBy(desc(tradesTable.tradedAt)).limit(50);
+  const userId = resolveUserId(req);
+  const trades = await db
+    .select()
+    .from(tradesTable)
+    .where(eq(tradesTable.userId, userId))
+    .orderBy(desc(tradesTable.tradedAt))
+    .limit(50);
 
   if (trades.length === 0) {
     return res.json({

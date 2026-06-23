@@ -6,6 +6,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import { ArrowLeft } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { apiErrorMessage } from "@/lib/utils";
 import { Link } from "wouter";
 
 const schema = z.object({
@@ -74,8 +75,11 @@ export default function AddTrade() {
           setLocation(`/trades/${trade.id}`);
         },
         onError: (err) => {
-          const message = err instanceof Error ? err.message : "Failed to save trade";
-          toast({ title: "Failed to save trade", description: message, variant: "destructive" });
+          toast({
+            title: "Failed to save trade",
+            description: apiErrorMessage(err, "Sign in and try again."),
+            variant: "destructive",
+          });
         },
       }
     );

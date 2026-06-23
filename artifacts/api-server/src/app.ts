@@ -5,6 +5,13 @@ import { logger } from "./lib/logger";
 
 const app: Express = express();
 
+const allowedOrigins = [
+  process.env.APP_URL,
+  process.env.API_PUBLIC_URL,
+  "http://localhost:18405",
+  "http://127.0.0.1:18405",
+].filter(Boolean) as string[];
+
 // Always available — Railway healthcheck must pass even if DB/routes fail to load.
 app.get("/api/healthz", (_req, res) => {
   res.json({ status: "ok" });
@@ -29,7 +36,18 @@ app.use(
     },
   }),
 );
-app.use(cors());
+app.use(
+  cors({
+    origin(origin, callback) {
+      if (!origin || allowedOrigins.length === 0 || allowedOrigins.includes(origin)) {
+        callback(null, true);
+        return;
+      }
+      callback(null, true);
+    },
+    allowedHeaders: ["Content-Type", "Authorization"],
+  }),
+);
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 

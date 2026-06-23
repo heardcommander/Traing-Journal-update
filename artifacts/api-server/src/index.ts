@@ -1,5 +1,6 @@
 import app from "./app";
 import { logger } from "./lib/logger";
+import { registerErrorHandler } from "./lib/error-handler";
 
 const rawPort = process.env["PORT"];
 
@@ -23,15 +24,18 @@ app.listen(port, (err) => {
 
   logger.info({ port }, "Server listening");
 
-  void import("./routes/index.js")
+  void import("@workspace/db")
+    .then(({ ensureSchema }) => ensureSchema())
+    .then(() => import("./routes/index.js"))
     .then(({ default: router }) => {
       app.use("/api", router);
+      registerErrorHandler(app);
       logger.info("API routes mounted");
     })
     .catch((mountErr) => {
       logger.error(
         { err: mountErr },
-        "Failed to mount API routes — set DATABASE_URL to a Neon postgresql:// URL (not pglite://)",
+        "Failed to mount API routes — check DATABASE_URL and Supabase env vars",
       );
     });
 });

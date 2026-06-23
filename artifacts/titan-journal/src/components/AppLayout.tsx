@@ -1,6 +1,8 @@
 import { Link, useLocation } from "wouter";
-import { LayoutDashboard, BookOpen, PlusCircle, BarChart2, CheckSquare, Brain, TrendingUp } from "lucide-react";
+import { LayoutDashboard, BookOpen, PlusCircle, BarChart2, CheckSquare, Brain, TrendingUp, LogOut } from "lucide-react";
+import { useQueryClient } from "@tanstack/react-query";
 import ErrorBoundary from "@/ErrorBoundary";
+import { useAuth } from "@/contexts/auth-context";
 import { cn } from "@/lib/utils";
 
 const navItems = [
@@ -13,7 +15,15 @@ const navItems = [
 ];
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
-  const [location] = useLocation();
+  const [location, setLocation] = useLocation();
+  const { user, signOut } = useAuth();
+  const queryClient = useQueryClient();
+
+  async function handleSignOut() {
+    await signOut();
+    queryClient.clear();
+    setLocation("/login");
+  }
 
   return (
     <div className="flex h-screen bg-background overflow-hidden">
@@ -57,7 +67,20 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           })}
         </nav>
 
-        <div className="px-5 py-4 border-t border-sidebar-border">
+        <div className="px-5 py-4 border-t border-sidebar-border space-y-3">
+          {user?.email && (
+            <p className="text-xs text-muted-foreground truncate" title={user.email}>
+              {user.email}
+            </p>
+          )}
+          <button
+            type="button"
+            onClick={handleSignOut}
+            className="flex w-full items-center gap-2 text-xs text-muted-foreground hover:text-foreground transition-colors"
+          >
+            <LogOut className="h-3.5 w-3.5" />
+            Sign out
+          </button>
           <p className="text-xs text-muted-foreground font-medium">
             {new Date().toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric" })}
           </p>
