@@ -19,7 +19,7 @@ function useLoginRedirectTarget() {
 }
 
 export default function Login() {
-  const { signIn, signUp, session } = useAuth();
+  const { signIn, signUp, session, configError } = useAuth();
   const [, setLocation] = useLocation();
   const redirectTo = useLoginRedirectTarget();
   const [mode, setMode] = useState<"signin" | "signup">("signin");
@@ -71,6 +71,11 @@ export default function Login() {
           </CardDescription>
         </CardHeader>
         <CardContent>
+          {configError ? (
+            <div className="rounded-lg border border-destructive/40 bg-destructive/10 p-4 text-sm text-destructive">
+              {configError}
+            </div>
+          ) : (
           <form onSubmit={onSubmit} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
@@ -101,6 +106,8 @@ export default function Login() {
               {busy ? "Please wait…" : mode === "signin" ? "Sign in" : "Sign up"}
             </Button>
           </form>
+          )}
+          {!configError && (
           <p className="mt-4 text-center text-sm text-muted-foreground">
             {mode === "signin" ? (
               <>
@@ -134,6 +141,7 @@ export default function Login() {
               </>
             )}
           </p>
+          )}
         </CardContent>
       </Card>
     </div>

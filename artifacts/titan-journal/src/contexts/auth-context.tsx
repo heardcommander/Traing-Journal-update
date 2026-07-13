@@ -9,7 +9,7 @@ import {
 } from "react";
 import type { Session, User } from "@supabase/supabase-js";
 import { setAuthTokenGetter } from "@workspace/api-client-react";
-import { supabase } from "@/lib/supabase";
+import { supabase, supabaseConfigError } from "@/lib/supabase";
 
 export type AuthResult = {
   error: string | null;
@@ -20,6 +20,7 @@ type AuthContextValue = {
   session: Session | null;
   user: User | null;
   loading: boolean;
+  configError: string | null;
   signIn: (email: string, password: string) => Promise<AuthResult>;
   signUp: (email: string, password: string) => Promise<AuthResult>;
   signOut: () => Promise<void>;
@@ -42,16 +43,22 @@ function friendlyAuthError(message: string): string {
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(Boolean(supabase));
 
   useEffect(() => {
     setAuthTokenGetter(async () => {
+      if (!supabase) return null;
       const { data } = await supabase.auth.getSession();
       return data.session?.access_token ?? null;
     });
   }, []);
 
   useEffect(() => {
+    if (!supabase) {
+      setLoading(false);
+      return;
+    }
+
     supabase.auth
       .getSession()
       .then(({ data }) => {
@@ -71,18 +78,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     return () => {
       try {
-        const subscription = (sub as any)?.subscription ?? (sub as any);
-        const unsubscribeFn = typeof subscription?.unsubscribe === "function" ? subscription.unsubscribe : undefined;
-        if (unsubscribeFn) {
-          unsubscribeFn.call(subscription);
-        }
-      } catch (e) {
-        // swallow; cleanup best-effort only
+        const subscription = (sub as { subscription?: { unsubscribe?: () => void } })?.subscription ?? sub;
+        subscription?.unsubscribe?.();
+      } catch {
+        // cleanup best-effort only
       }
     };
   }, []);
 
   const signIn = useCallback(async (email: string, password: string): Promise<AuthResult> => {
+    if (!supabase) {
+      return { error: supabaseConfigError ?? "Authentication is not configured." };
+    }
     const { data, error } = await supabase.auth.signInWithPassword({
       email: email.trim(),
       password,
@@ -97,6 +104,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const signUp = useCallback(async (email: string, password: string): Promise<AuthResult> => {
+    if (!supabase) {
+      return { error: supabaseConfigError ?? "Authentication is not configured." };
+    }
     const { data, error } = await supabase.auth.signUp({
       email: email.trim(),
       password,
@@ -118,7 +128,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const signOut = useCallback(async () => {
-    await supabase.auth.signOut();
+    if (supabase) {
+      await supabase.auth.signOut();
+    }
     setSession(null);
   }, []);
 
@@ -127,6 +139,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       session,
       user: session?.user ?? null,
       loading,
+      configError: supabaseConfigError,
       signIn,
       signUp,
       signOut,

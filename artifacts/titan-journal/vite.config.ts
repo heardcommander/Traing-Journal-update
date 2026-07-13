@@ -1,7 +1,8 @@
+import fs from "node:fs";
+import path from "node:path";
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
-import path from "path";
 import runtimeErrorOverlay from "@replit/vite-plugin-runtime-error-modal";
 
 const rawPort = process.env.PORT ?? "18405";
@@ -12,12 +13,28 @@ if (Number.isNaN(port) || port <= 0) {
 }
 
 const basePath = process.env.BASE_PATH ?? "/";
+const appRoot = path.resolve(import.meta.dirname);
+
+function spaFallbackPlugin() {
+  return {
+    name: "spa-fallback",
+    closeBundle() {
+      const outDir = path.resolve(appRoot, "dist/public");
+      const indexPath = path.join(outDir, "index.html");
+      const fallbackPath = path.join(outDir, "404.html");
+      if (fs.existsSync(indexPath)) {
+        fs.copyFileSync(indexPath, fallbackPath);
+      }
+    },
+  };
+}
 
 export default defineConfig({
   base: basePath,
   plugins: [
     react(),
     tailwindcss(),
+    spaFallbackPlugin(),
     ...(process.env.NODE_ENV !== "production" ? [runtimeErrorOverlay()] : []),
     ...(process.env.NODE_ENV !== "production" &&
     process.env.REPL_ID !== undefined
@@ -35,14 +52,14 @@ export default defineConfig({
   ],
   resolve: {
     alias: {
-      "@": path.resolve(import.meta.dirname, "src"),
-      "@assets": path.resolve(import.meta.dirname, "..", "..", "attached_assets"),
+      "@": path.resolve(appRoot, "src"),
+      "@assets": path.resolve(appRoot, "..", "..", "attached_assets"),
     },
     dedupe: ["react", "react-dom"],
   },
-  root: path.resolve(import.meta.dirname),
+  root: appRoot,
   build: {
-    outDir: path.resolve(import.meta.dirname, "dist/public"),
+    outDir: path.resolve(appRoot, "dist/public"),
     emptyOutDir: true,
   },
   server: {
